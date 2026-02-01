@@ -94,10 +94,10 @@ RUNWARE_API_KEY=your_api_key_here
 #### **Docker Deployment**
 ```bash
 # Build the Docker image
-docker build -t runware_mcp_sse .
+docker build -t runware-mcp .
 
 # Run the container
-docker run --rm -p 8081:8081 runware_mcp_sse
+docker run --rm -p 8081:8081 runware-mcp
 ```
 
 ### **Method 2: MCP Install (Direct Integration)**
