@@ -57,56 +57,126 @@ https://github.com/user-attachments/assets/9732096b-8513-455c-9759-cc88363c42f9
 
 ## Prerequisites
 
-- **Python**: 3.10 or higher
 - **Runware API Key**: Get your API key from [Runware Dashboard](https://my.runware.ai)
-- **Dependencies**: See `requirements.txt` or `pyproject.toml`
+- **Docker** (for Method 1) or **Python 3.10+** (for Method 2)
+- **MCP Client**: Claude Desktop, Claude Code, or Cursor
 
-## Installation
+## Quick Start
 
-### **1. Clone the Repository**
+### **Method 1: Docker (Recommended)**
+
+Pull and run the pre-built Docker image:
+
 ```bash
-git clone https://github.com/Runware/MCP-Runware.git
-cd MCP-Runware
+# Pull from Docker Hub
+docker pull bicharri/runware-mcp:latest
+
+# Run the container with your API key
+docker run --rm -p 8081:8081 \
+  -e RUNWARE_API_KEY=your_api_key_here \
+  bicharri/runware-mcp:latest
 ```
 
-### **2. Install Dependencies**
+Or build from source:
 ```bash
-# Using uv (recommended)
+# Clone and build
+git clone https://github.com/Runware/MCP-Runware.git
+cd MCP-Runware
+docker build -t runware-mcp .
+
+# Run the container
+docker run --rm -p 8081:8081 \
+  -e RUNWARE_API_KEY=your_api_key_here \
+  runware-mcp
+```
+
+### **Method 2: Local Python Installation**
+
+```bash
+# Clone the repository
+git clone https://github.com/Runware/MCP-Runware.git
+cd MCP-Runware
+
+# Install dependencies
 uv venv
 source .venv/bin/activate
 uv pip install .
 
-# Or using pip
-pip install -r requirements.txt
+# Create .env file with your API key
+echo "RUNWARE_API_KEY=your_api_key_here" > .env
+
+# Run the server
+python runware_mcp_server.py
 ```
 
-### **3. Environment Setup**
-Create a `.env` file in the project root:
-```bash
-RUNWARE_API_KEY=your_api_key_here
+### **Method 3: MCP Install (Direct Integration)**
 
-```
-
-## Deployment Methods
-
-### **Method 1: SSE Server (Recommended for Production)**
-
-#### **Docker Deployment**
-```bash
-# Build the Docker image
-docker build -t runware-mcp .
-
-# Run the container
-docker run --rm -p 8081:8081 runware-mcp
-```
-
-### **Method 2: MCP Install (Direct Integration)**
-
-#### **Install in Claude Desktop**
+For direct integration with Claude Desktop:
 ```bash
 # From the project directory
 mcp install --with-editable . runware_mcp_server.py
 ```
+
+## Connecting to MCP Clients
+
+Once the server is running (via Docker or local installation), configure your MCP client to connect to it.
+
+### **Claude Desktop**
+
+Add to your Claude Desktop configuration file:
+
+**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "runware": {
+      "url": "http://localhost:8081/sse"
+    }
+  }
+}
+```
+
+Restart Claude Desktop after saving the configuration.
+
+### **Claude Code**
+
+Add to your Claude Code settings:
+
+**macOS/Linux**: `~/.claude/settings.json`
+**Windows**: `%USERPROFILE%\.claude\settings.json`
+
+```json
+{
+  "mcpServers": {
+    "runware": {
+      "url": "http://localhost:8081/sse"
+    }
+  }
+}
+```
+
+Restart Claude Code or reload the settings after saving.
+
+### **Cursor**
+
+Add to your Cursor MCP settings file:
+
+**macOS**: `~/Library/Application Support/Cursor/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`
+**Windows**: `%APPDATA%\Cursor\User\globalStorage\saoudrizwan.claude-dev\settings\cline_mcp_settings.json`
+
+```json
+{
+  "mcpServers": {
+    "runware": {
+      "url": "http://localhost:8081/sse"
+    }
+  }
+}
+```
+
+Restart Cursor after saving the configuration.
 
 ## Model Recommendations
 
