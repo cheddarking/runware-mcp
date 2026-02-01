@@ -137,8 +137,6 @@ Add to your Claude Desktop configuration file:
         "run",
         "--rm",
         "-i",
-        "-p",
-        "8081:8081",
         "-e",
         "RUNWARE_API_KEY=your_api_key_here",
         "bicharri/runware-mcp:latest"
@@ -165,8 +163,6 @@ Create a `.mcp.json` file in your project directory:
         "run",
         "--rm",
         "-i",
-        "-p",
-        "8081:8081",
         "-e",
         "RUNWARE_API_KEY=your_api_key_here",
         "bicharri/runware-mcp:latest"
@@ -179,6 +175,8 @@ Create a `.mcp.json` file in your project directory:
 **Important**: Replace `your_api_key_here` with your actual Runware API key.
 
 Claude Code will detect the `.mcp.json` file and prompt you to enable the MCP server. Once enabled, restart Claude Code to activate the connection.
+
+**Note**: This configuration uses stdio transport (stdin/stdout communication). The container automatically starts when Claude Code launches and stops when it exits.
 
 ### **Cursor**
 
@@ -196,8 +194,6 @@ Add to your Cursor MCP settings file:
         "run",
         "--rm",
         "-i",
-        "-p",
-        "8081:8081",
         "-e",
         "RUNWARE_API_KEY=your_api_key_here",
         "bicharri/runware-mcp:latest"
@@ -211,13 +207,16 @@ Add to your Cursor MCP settings file:
 
 Restart Cursor after saving the configuration.
 
+**Note**: This configuration uses stdio transport (stdin/stdout communication). The container automatically starts when Cursor launches and stops when it exits.
+
 ### **Alternative: Manual Server Mode**
 
-If you prefer to run the server manually (without automatic start/stop), start the Docker container:
+If you prefer to run the server manually (without automatic start/stop), start the Docker container with SSE transport:
 
 ```bash
 docker run --rm -p 8081:8081 \
   -e RUNWARE_API_KEY=your_api_key_here \
+  -e MCP_TRANSPORT=sse \
   bicharri/runware-mcp:latest
 ```
 
@@ -232,6 +231,8 @@ Then configure your MCP client with a URL connection:
   }
 }
 ```
+
+**Note**: Manual server mode uses SSE (Server-Sent Events) transport over HTTP. The `-e MCP_TRANSPORT=sse` flag enables HTTP server mode on port 8081.
 
 ## Model Recommendations
 
@@ -250,11 +251,84 @@ You can find all additional models here: [Runware Models](https://my.runware.ai/
 
 ### **Environment Variables**
 - `RUNWARE_API_KEY`: Your Runware API key (required)
+- `MCP_TRANSPORT`: Transport protocol selection (`stdio` or `sse`, default: `stdio`)
+
+### **Transport Modes**
+
+The server supports two transport modes:
+
+#### **Stdio Transport (Default)**
+- Used for Docker auto-start configurations (`command` + `args` in MCP client config)
+- Communicates via stdin/stdout between MCP client and container
+- Container lifecycle managed automatically by MCP client
+- No network port required
+- Best for: Claude Desktop, Claude Code, Cursor
+
+#### **SSE Transport**
+- Used for manual server mode with URL connections
+- Communicates via HTTP/SSE on port 8081
+- Requires `-e MCP_TRANSPORT=sse` when starting container
+- Container runs independently until manually stopped
+- Best for: Long-running servers, multiple client connections
 
 ### **Input Validation**
 - Rejects Claude upload URLs (`https://files.*`). Claude tends to include base64 strings in its reasoning/thinking process, which rapidly fills the context window with garbage data. [Learn more about this issue](https://claude.ai/public/artifacts/0f28d79d-47bd-4fb8-bc25-e2699d78479f)
 - Supports local file paths, public accessible URLs (make sure it has proper file extension such as JPG, PNG, WEBP, etc), and Runware UUIDs
 
+## Troubleshooting
+
+### **Container Stops Immediately After Starting**
+
+**Problem**: Docker container exits within seconds when launched via `.mcp.json`.
+
+**Solution**: Ensure you're using stdio transport (default). Check your configuration:
+- Remove `-t` flag (not needed for stdio)
+- Remove `--name` flag (allows multiple instances)
+- Remove `-p 8081:8081` port mapping (not needed for stdio)
+- Keep `-i` flag to maintain stdin
+
+**Correct configuration:**
+```json
+{
+  "mcpServers": {
+    "runware": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "-e",
+        "RUNWARE_API_KEY=your_api_key_here",
+        "bicharri/runware-mcp:latest"
+      ]
+    }
+  }
+}
+```
+
+### **Manual Server Won't Start**
+
+**Problem**: Container starts but no HTTP server on port 8081.
+
+**Solution**: Add `-e MCP_TRANSPORT=sse` to enable HTTP server mode:
+```bash
+docker run --rm -p 8081:8081 \
+  -e RUNWARE_API_KEY=your_api_key_here \
+  -e MCP_TRANSPORT=sse \
+  bicharri/runware-mcp:latest
+```
+
+### **When to Use Each Transport**
+
+Use **stdio** (default) when:
+- Using `command` + `args` in MCP client configuration
+- Want automatic container lifecycle management
+- Running with Claude Desktop, Claude Code, or Cursor
+
+Use **sse** when:
+- Using `url` in MCP client configuration
+- Need manual control over server lifecycle
+- Want multiple clients to connect to same server instance
 
 ## Support
 

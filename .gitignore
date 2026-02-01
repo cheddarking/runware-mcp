@@ -3,6 +3,9 @@
 .env.local
 .env.*.local
 
+# IDE workspace files
+*.code-workspace
+
 # Virtual environments
 venv/
 env/

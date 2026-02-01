@@ -6,10 +6,8 @@
         "run",
         "--rm",
         "-i",
-        "-p",
-        "8081:8081",
         "-e",
-        "RUNWARE_API_KEY=YOUR_API_KEY_HERE",
+        "RUNWARE_API_KEY=your_api_key_here",
         "bicharri/runware-mcp:latest"
       ]
     }

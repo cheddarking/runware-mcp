@@ -142,8 +142,8 @@ async def imageInference(
     Args:
         positivePrompt (str): Text instruction to guide the model on generating the image, If you wish to generate an image without any prompt guidance, you can use the special token __BLANK__
         model (str): Model identifier (default: "civitai:943001@1055701")
-        height (int): Image height (128-2048, divisible by 64, default: 1024)
-        width (int): Image width (128-2048, divisible by 64, default: 1024)
+        height (int): Image height (128-2048 for most models, up to 4096 for some like ByteDance. Divisible by 64, default: 1024)
+        width (int): Image width (128-2048 for most models, up to 4096 for some like ByteDance. Divisible by 64, default: 1024)
         numberResults (int): Number of images to generate (1-20, default: 1). If user says "generate 4 images ..." then numberResults should be 4, says "create 2 images ... " then numberResults should be 2, etc.
         steps (int, optional): number of iterations the model will perform to generate the image (1-100, default: 20). The higher the number of steps, the more detailed the image will be
         CFGScale (float, optional): Represents how closely the images will resemble the prompt or how much freedom the AI model has (0-50, default: 7). Higher values are closer to the prompt. Low values may reduce the quality of the results.
@@ -250,6 +250,14 @@ async def imageInference(
             "acePlusPlus": acePlusPlus,
             "extraArgs": extraArgs
         }
+
+        # Handle ByteDance specific requirements
+        # ByteDance models (Seedream, SeedEdit) do not support steps, CFGScale, or scheduler
+        if model.startswith("bytedance:"):
+            keys_to_remove = ["steps", "CFGScale", "scheduler"]
+            for key in keys_to_remove:
+                if key in optional_params:
+                    optional_params[key] = None
 
         for key, value in optional_params.items():
             if value is not None:
@@ -1385,19 +1393,24 @@ def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlett
     )
 
 if __name__ == "__main__":
-    # Get the underlying MCP server instance from FastMCP
-    mcp_server = mcp._mcp_server  # Accessing private member (acceptable here)
-
-    # Command-line arguments for host/port control
+    # Command-line arguments for transport selection and server config
     import argparse
+    import os
 
-    parser = argparse.ArgumentParser(description='Run MCP SSE-based server')
-    parser.add_argument('--host', default='0.0.0.0', help='Host to bind to')
-    parser.add_argument('--port', type=int, default=8081, help='Port to listen on')
+    parser = argparse.ArgumentParser(description='Run MCP server with flexible transport')
+    parser.add_argument('--transport',
+                        choices=['stdio', 'sse'],
+                        default=os.getenv('MCP_TRANSPORT', 'stdio'),
+                        help='Transport protocol (default: stdio for .mcp.json, sse for manual)')
+    parser.add_argument('--host', default='0.0.0.0', help='Host for SSE transport')
+    parser.add_argument('--port', type=int, default=8081, help='Port for SSE transport')
     args = parser.parse_args()
 
-    # Build the Starlette app with debug mode enabled
-    starlette_app = create_starlette_app(mcp_server, debug=True)
-
-    # Launch the server using Uvicorn
-    uvicorn.run(starlette_app, host=args.host, port=args.port)
+    if args.transport == 'sse':
+        # SSE transport for manual server mode
+        mcp_server = mcp._mcp_server  # Accessing private member (acceptable here)
+        starlette_app = create_starlette_app(mcp_server, debug=True)
+        uvicorn.run(starlette_app, host=args.host, port=args.port)
+    else:
+        # Stdio transport for .mcp.json Docker auto-start
+        mcp.run(transport='stdio')

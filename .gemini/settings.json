@@ -1,0 +1,17 @@
+{
+    "mcpServers": {
+      "runware": {
+        "command": "docker",
+        "args": [
+          "run",
+          "--name",
+          "runware-mcp",
+          "--rm",
+          "-i",
+          "-e",
+          "RUNWARE_API_KEY=oy4hVPEcLqhEQyHN6vtWVweCGwF00cCz",
+          "bicharri/runware-mcp:latest"
+        ]
+    }
+  }
+}
