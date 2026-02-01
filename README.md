@@ -119,7 +119,7 @@ mcp install --with-editable . runware_mcp_server.py
 
 ## Connecting to MCP Clients
 
-Once the server is running (via Docker or local installation), configure your MCP client to connect to it.
+Configure your MCP client to automatically start and stop the Docker container.
 
 ### **Claude Desktop**
 
@@ -132,11 +132,23 @@ Add to your Claude Desktop configuration file:
 {
   "mcpServers": {
     "runware": {
-      "url": "http://localhost:8081/sse"
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "-p",
+        "8081:8081",
+        "-e",
+        "RUNWARE_API_KEY=your_api_key_here",
+        "bicharri/runware-mcp:latest"
+      ]
     }
   }
 }
 ```
+
+**Important**: Replace `your_api_key_here` with your actual Runware API key.
 
 Restart Claude Desktop after saving the configuration.
 
@@ -151,11 +163,23 @@ Add to your Claude Code settings:
 {
   "mcpServers": {
     "runware": {
-      "url": "http://localhost:8081/sse"
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "-p",
+        "8081:8081",
+        "-e",
+        "RUNWARE_API_KEY=your_api_key_here",
+        "bicharri/runware-mcp:latest"
+      ]
     }
   }
 }
 ```
+
+**Important**: Replace `your_api_key_here` with your actual Runware API key.
 
 Restart Claude Code or reload the settings after saving.
 
@@ -170,13 +194,47 @@ Add to your Cursor MCP settings file:
 {
   "mcpServers": {
     "runware": {
-      "url": "http://localhost:8081/sse"
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "-p",
+        "8081:8081",
+        "-e",
+        "RUNWARE_API_KEY=your_api_key_here",
+        "bicharri/runware-mcp:latest"
+      ]
     }
   }
 }
 ```
 
+**Important**: Replace `your_api_key_here` with your actual Runware API key.
+
 Restart Cursor after saving the configuration.
+
+### **Alternative: Manual Server Mode**
+
+If you prefer to run the server manually (without automatic start/stop), start the Docker container:
+
+```bash
+docker run --rm -p 8081:8081 \
+  -e RUNWARE_API_KEY=your_api_key_here \
+  bicharri/runware-mcp:latest
+```
+
+Then configure your MCP client with a URL connection:
+
+```json
+{
+  "mcpServers": {
+    "runware": {
+      "url": "http://localhost:8081/sse"
+    }
+  }
+}
+```
 
 ## Model Recommendations
 
