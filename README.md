@@ -154,10 +154,7 @@ Restart Claude Desktop after saving the configuration.
 
 ### **Claude Code**
 
-Add to your Claude Code settings:
-
-**macOS/Linux**: `~/.claude/settings.json`
-**Windows**: `%USERPROFILE%\.claude\settings.json`
+Create a `.mcp.json` file in your project directory:
 
 ```json
 {
@@ -181,7 +178,7 @@ Add to your Claude Code settings:
 
 **Important**: Replace `your_api_key_here` with your actual Runware API key.
 
-Restart Claude Code or reload the settings after saving.
+Claude Code will detect the `.mcp.json` file and prompt you to enable the MCP server. Once enabled, restart Claude Code to activate the connection.
 
 ### **Cursor**
 
